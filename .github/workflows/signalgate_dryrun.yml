@@ -1,14 +1,13 @@
-name: SignalGate v0.1 (Fetch -> Ingest -> Run Latest -> PushDeer)
+name: SignalGate DryRun
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "15 0 * * *"
-    - cron: "15 12 * * *"
+    - cron: "15 * * * *"
 
 jobs:
   run:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       PUSHDEER_KEY: ${{ secrets.PUSHDEER_KEY }}
       PUSHDEER_URL: ${{ secrets.PUSHDEER_URL }}
@@ -26,24 +25,31 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Fetch RSS into inbox (silent)
+      - name: Fetch RSS to inbox
         run: |
           python -m signalgate --root . fetch --url "https://www.sec.gov/news/pressreleases.rss" --limit 10
 
-      - name: Ingest inbox -> cold (silent)
+      - name: Ingest inbox to cold
         run: |
           python -m signalgate --root . ingest --input ./data/inbox
 
-      - name: Run latest inbox event (only interrupt prints)
-        shell: bash
+      - name: Run latest inbox event (interrupt-only) + archive inbox
         run: |
           set -euo pipefail
+
           LATEST="$(ls -1t ./data/inbox/*.json 2>/dev/null | head -n 1 || true)"
           if [ -z "$LATEST" ]; then
             exit 0
           fi
+
           OUT="$(python -m signalgate --root . run --input "$LATEST" || true)"
           if [ -n "$OUT" ]; then
             echo "$OUT"
             python -m signalgate notify --text "SignalGate INTERRUPT" --desp "$OUT"
           fi
+
+          # CI v0.2: archive inbox after processing to avoid repeating the same latest item forever
+          TS="$(date -u +%Y%m%dT%H%M%SZ)"
+          mkdir -p "./data/state/ci_archived_inbox/$TS"
+          shopt -s nullglob
+          mv ./data/inbox/*.json "./data/state/ci_archived_inbox/$TS/" || true
