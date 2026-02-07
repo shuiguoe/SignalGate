@@ -1,4 +1,4 @@
-name: SignalGate v0.1 (Fetch -> Ingest -> Run -> PushDeer)
+name: SignalGate v0.1 (Fetch -> Ingest -> Run Latest -> PushDeer)
 
 on:
   workflow_dispatch:
@@ -34,11 +34,15 @@ jobs:
         run: |
           python -m signalgate --root . ingest --input ./data/inbox
 
-      - name: Run once (fixture gate test; only interrupt prints)
+      - name: Run latest inbox event (only interrupt prints)
         shell: bash
         run: |
           set -euo pipefail
-          OUT="$(python -m signalgate --root . run --input ./fixtures/event_sell.json || true)"
+          LATEST="$(ls -1t ./data/inbox/*.json 2>/dev/null | head -n 1 || true)"
+          if [ -z "$LATEST" ]; then
+            exit 0
+          fi
+          OUT="$(python -m signalgate --root . run --input "$LATEST" || true)"
           if [ -n "$OUT" ]; then
             echo "$OUT"
             python -m signalgate notify --text "SignalGate INTERRUPT" --desp "$OUT"
