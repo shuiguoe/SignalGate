@@ -9,6 +9,7 @@ from .gate import reset_gate
 from .audit import summarize_interrupts
 from .ingest_cli import ingest
 from .notify import send_push
+from .fetch import fetch_rss_to_inbox
 
 
 def main() -> None:
@@ -16,6 +17,11 @@ def main() -> None:
     p.add_argument("--root", default=None, help="Project root path (or env SIGNALGATE_HOME).")
 
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    fx = sub.add_parser("fetch", help="Fetch RSS/Atom into data/inbox (silent by default).")
+    fx.add_argument("--url", required=True, help="RSS/Atom feed URL.")
+    fx.add_argument("--limit", type=int, default=20, help="Max items to write (default 20).")
+    fx.add_argument("--print-count", action="store_true", help="Print fetched count (opt-in).")
 
     ig = sub.add_parser("ingest", help="Ingress layer: write events into cold store (silent by default).")
     ig.add_argument("--input", required=True, help="Path to an event.json file OR a directory of event jsons.")
@@ -38,6 +44,16 @@ def main() -> None:
 
     args = p.parse_args()
     paths = get_paths(args.root)
+
+    if args.cmd == "fetch":
+        n_fx = fetch_rss_to_inbox(
+            url=str(args.url),
+            inbox_dir=paths.data_dir / "inbox",
+            limit=int(args.limit),
+        )
+        if args.print_count:
+            print(f"Fetched: {n_fx}")
+        return
 
     if args.cmd == "ingest":
         n_ing = ingest(
