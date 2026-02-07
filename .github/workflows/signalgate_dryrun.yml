@@ -1,4 +1,4 @@
-name: SignalGate v0.1 (Interrupt -> PushDeer)
+name: SignalGate v0.1 (Fetch -> Ingest -> Run -> PushDeer)
 
 on:
   workflow_dispatch:
@@ -26,7 +26,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run once (only interrupt prints)
+      - name: Fetch RSS into inbox (silent)
+        run: |
+          python -m signalgate --root . fetch --url "https://www.sec.gov/news/pressreleases.rss" --limit 10
+
+      - name: Ingest inbox -> cold (silent)
+        run: |
+          python -m signalgate --root . ingest --input ./data/inbox
+
+      - name: Run once (fixture gate test; only interrupt prints)
         shell: bash
         run: |
           set -euo pipefail
