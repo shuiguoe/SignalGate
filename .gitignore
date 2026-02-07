@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# SignalGate runtime data (DO NOT COMMIT)
+data/cold/
+data/tentative/
+data/audit/
+data/state/
+
+# Local test events (optional)
+event_*.json
+
+# Build
+dist/
+build/
+*.egg-info/

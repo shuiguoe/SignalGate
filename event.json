@@ -1,0 +1,10 @@
+{
+  "event_id": "evt_tsla_struct_action_001",
+  "ts": "2026-02-07T00:00:00Z",
+  "title": "TSLA: Material regulatory filing triggers action window",
+  "body": "This is a test event for SignalGate v0.1. It simulates an A-tier official filing that represents a structural change affecting TSLA and requires action. The purpose is to verify the full interrupt pipeline end-to-end.",
+  "url": "https://www.sec.gov/",
+  "source": "sec.gov",
+  "source_tier": "A",
+  "tags": ["structural", "regulation", "action_required", "tsla"]
+}

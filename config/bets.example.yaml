@@ -1,0 +1,23 @@
+# bets.example.yaml
+# 你已经“下注”的对象。Q2 只围绕它判断：没下注 = 不相关。
+# v0.1 只支持 direct + force 两类。
+
+version: 1
+bets:
+  direct:
+    # 资产/项目/路径（可逐步加）
+    - id: qqqm
+      type: asset
+      name: QQQM
+      tags: ["nasdaq100", "equity"]
+    - id: signalgate
+      type: project
+      name: SignalGate
+      tags: ["tooling", "automation"]
+
+  force:
+    # 强制风险（可绕过 Q2）：税务/账户/合规/身份法律风险（只保留极小集合）
+    - id: compliance
+      type: force
+      name: 合规与账户政策
+      tags: ["tax", "account", "kyc", "transfer", "regulation"]

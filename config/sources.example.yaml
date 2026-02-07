@@ -1,0 +1,20 @@
+# sources.example.yaml
+# 来源分级：A/B/C
+# A：官方原文/原始数据（可验证）
+# B：独立可信二手（最好可追溯到 A）
+# C：中文/审查/观点源（默认不得单独触发 Q1）
+
+version: 1
+tiers:
+  A:
+    - "sec.gov"
+    - "federalreserve.gov"
+    - "treasury.gov"
+  B:
+    - "reuters.com"
+    - "ft.com"
+    - "wsj.com"
+  C:
+    - "weibo.com"
+    - "zhihu.com"
+    - "mp.weixin.qq.com"

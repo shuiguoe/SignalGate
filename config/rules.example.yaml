@@ -1,0 +1,26 @@
+# rules.example.yaml
+# 规则目标：把“三问法”变成可机器执行的布尔判定。
+# v0.1：只做最小闭环，不做行业研究。
+
+version: 1
+
+decision:
+  # Tentative 观测窗口（只在 cold 内部聚合，不对外输出）
+  observation_window_hours: 24
+  # Q1 最低证据强度（A/B/C）
+  q1_min_evidence: "B"
+  # Tier C 触发 Q1 的抬阈值策略：必须出现 A 或 >=2 个 B
+  tier_c_requires:
+    a_backing: true
+    b_count: 2
+
+interrupt:
+  # 每月打断预算（软上限，硬上限由 gate 控制）
+  monthly_budget: 3
+  # Interrupt 消息正文长度上限（中文字符，粗略约束）
+  max_body_chars: 60
+
+gate:
+  # 熔断：1 小时内 >=2 次 interrupt
+  burst_window_minutes: 60
+  burst_limit: 2

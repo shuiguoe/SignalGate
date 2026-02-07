@@ -1,0 +1,104 @@
+# rules.yaml
+# 三问法“硬阈值”配置（冻结）
+# 目的：默认沉默 + 只在必须行动时打断
+
+version: 1
+
+decision:
+  # Observation Buffer（暂存观察窗口）
+  # v0.1：只用于标记 tentative，不允许直接变成 interrupt
+  observation_window_hours: 24
+
+  # Q1：结构变化的最低证据强度
+  # 规则：Q1 只有在证据 >= B 时才允许 YES
+  q1_min_evidence: "B"
+
+  # 对中文/低可信源的抬阈值策略（宪法约束）
+  # tier=C 的事件：不得单独触发 Q1=YES
+  tier_c_policy:
+    q1_always_no: true
+    # 说明：v0.2 才支持“多源聚合后翻转”
+    allow_promotion_by_multisource: false
+
+  # Q2：影响范围（v0.1 冻结）
+  # 只允许 direct + force
+  impact_radius:
+    direct: true
+    indirect: false
+    macro: false
+
+  # Q3：行动判定（v0.1 冻结）
+  # 只有明确标签才算“需要行动”
+  q3_policy:
+    require_explicit_tag: true
+    explicit_tags:
+      - "action_required"
+    # force 风险类标签视为需要行动（绕过显式标签）
+    force_tags:
+      - "tax"
+      - "account"
+      - "kyc"
+      - "transfer"
+      - "identity"
+      - "legal"
+      - "regulation"
+
+evidence:
+  # 证据强度顺序（不可改）
+  rank:
+    C: 0
+    B: 1
+    A: 2
+
+interrupt:
+  # 打断预算：月度软预算（审计用）
+  monthly_budget: 3
+
+  # 打断消息正文长度上限（中文字符）
+  max_body_chars: 60
+
+  # 消息模板（冻结）
+  template:
+    header: "[INTERRUPT] <entity> <signal_type>"
+    fields:
+      - "Rule: <rule_id>"
+      - "Evidence: <evidence>"
+      - "Action: <action> | Deadline: <deadline_or_None>"
+      - "Source: <source_or_None>"
+
+# ✅ Action 词表（冻结为配置真相源）
+# 说明：这是“动作映射”的触发标签集合，按强到弱匹配。
+# 优先级：SELL > REDUCE > BUY > DO_NOTHING
+action_map:
+  allowed_actions: ["BUY", "SELL", "REDUCE", "DO_NOTHING"]
+
+  # 触发 SELL 的标签（强制退出/不可持有/强制执行）
+  sell_tags:
+    - "sell"
+    - "exit"
+    - "ban"
+    - "delist"
+    - "enforcement"
+
+  # 触发 REDUCE 的标签（减仓/去风险）
+  reduce_tags:
+    - "reduce"
+    - "trim"
+    - "risk_off"
+
+  # 触发 BUY 的标签（加仓/风险偏好上升）
+  buy_tags:
+    - "buy"
+    - "add"
+    - "risk_on"
+
+gate:
+  # 熔断：1 小时内 >=2 次打断 -> gate tripped
+  burst_window_minutes: 60
+  burst_limit: 2
+
+  # 熔断后处理（冻结）
+  tripped_behavior:
+    allow_interrupt: false
+    require_manual_reset: true
+    reset_command: "signalgate reset-gate"

@@ -1,0 +1,53 @@
+# bets.yaml
+# 已下注对象清单（Q2 判定唯一来源）
+# 原则：没写在这里 = 与我无关
+
+version: 1
+
+bets:
+  direct:
+    - id: qqqm
+      type: asset
+      name: QQQM
+      market: US
+      category: equity_etf
+      tags:
+        - nasdaq100
+        - us_equity
+        - growth
+        - structure_layer
+
+    - id: smh
+      type: asset
+      name: SMH
+      market: US
+      category: equity_etf
+      tags:
+        - semiconductor
+        - hardware
+        - ai_infra
+        - structure_layer
+
+    - id: tsla
+      type: asset
+      name: TSLA
+      market: US
+      category: equity
+      tags:
+        - ev
+        - manufacturing
+        - ai_application
+        - behavior_layer
+
+  force:
+    # 强制风险类（可绕过 Q2）
+    # 仅保留极小集合，后续如需再加
+    - id: compliance
+      type: force
+      name: 合规 / 账户 / 税务 / 跨境
+      tags:
+        - tax
+        - account
+        - kyc
+        - transfer
+        - regulation
