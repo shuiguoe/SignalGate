@@ -26,3 +26,7 @@ event_*.json
 dist/
 build/
 *.egg-info/
+
+# Allow CI fixtures (tracked)
+!fixtures/
+!fixtures/*.json

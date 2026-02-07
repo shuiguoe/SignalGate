@@ -1,0 +1,10 @@
+{
+  "event_id": "evt_ci_sell_001",
+  "ts": "2026-02-07T00:00:00Z",
+  "title": "TSLA: CI test event (SELL)",
+  "body": "CI-only test event. Should trigger interrupt and SELL action.",
+  "url": "https://www.sec.gov/",
+  "source": "sec.gov",
+  "source_tier": "A",
+  "tags": ["structural", "action_required", "sell", "tsla"]
+}
