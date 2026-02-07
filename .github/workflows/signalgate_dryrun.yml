@@ -3,7 +3,6 @@ name: SignalGate v0.1 (Interrupt -> PushDeer)
 on:
   workflow_dispatch:
   schedule:
-    # 每天 2 次（UTC）：00:15 / 12:15
     - cron: "15 0 * * *"
     - cron: "15 12 * * *"
 
@@ -31,7 +30,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          OUT="$(python -m signalgate --root . run --input ./event_sell.json || true)"
+          OUT="$(python -m signalgate --root . run --input ./fixtures/event_sell.json || true)"
           if [ -n "$OUT" ]; then
             echo "$OUT"
             python -m signalgate notify --text "SignalGate INTERRUPT" --desp "$OUT"
