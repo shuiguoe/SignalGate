@@ -25,13 +25,34 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # 手动触发时：强制发一条测试通知，用来验证 secrets + PushDeer 链路
+      - name: Self-test notify (workflow_dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          python -m signalgate notify --text "SignalGate SELFTEST" --desp "manual workflow_dispatch ok"
+
       - name: Fetch RSS to inbox
         run: |
           python -m signalgate --root . fetch --url "https://www.sec.gov/news/pressreleases.rss" --limit 10
 
+
+
+
       - name: Ingest inbox to cold
         run: |
           python -m signalgate --root . ingest --input ./data/inbox
+
+      - name: CI self-test (fixture should interrupt + notify)
+        run: |
+          OUT="$(python -m signalgate --root . run --input ./fixtures/event_sell.json || true)"
+          echo "[DBG] fixture_out_len=${#OUT}"
+          if [ -n "$OUT" ]; then
+            python -m signalgate notify --text "SignalGate SELFTEST" --desp "$OUT"
+          else
+            echo "::error::fixture produced empty OUT; self-test failed"
+            exit 1
+          fi
+
 
       - name: Run latest inbox event (dryrun debug + interrupt-only) + archive inbox
         shell: bash
