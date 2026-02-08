@@ -33,7 +33,7 @@ jobs:
         run: |
           python -m signalgate --root . ingest --input ./data/inbox
 
-      - name: Run latest inbox event (interrupt-only) + notify(debug) + archive inbox
+      - name: Run latest inbox event (dryrun debug + interrupt-only) + archive inbox
         shell: bash
         run: |
           set -euo pipefail
@@ -45,6 +45,12 @@ jobs:
             exit 0
           fi
 
+          echo "[DBG] --- dry-run decision ---"
+          DRY="$(python -m signalgate --root . run --input "$LATEST" --dry-run || true)"
+          echo "$DRY"
+          echo "[DBG] --- gate state ---"
+          python -c "from signalgate.paths import get_paths; from signalgate.gate import can_interrupt,on_interrupt; p=get_paths('.'); print('can_interrupt=',can_interrupt(p.config_dir,p.state_dir)); print('gate_state=',on_interrupt(p.config_dir,p.state_dir))"
+
           OUT="$(python -m signalgate --root . run --input "$LATEST" || true)"
           echo "[DBG] run_out_len=${#OUT}"
 
@@ -53,7 +59,6 @@ jobs:
             echo "$OUT"
             echo "[DBG] OUT(end)"
 
-            # 关键：打印 notify 返回值；并且不 ok 就 fail（避免你以为“发了”其实没发）
             NOTIFY_OUT="$(python -m signalgate notify --text "SignalGate INTERRUPT" --desp "$OUT")"
             echo "[DBG] notify_resp(begin)"
             echo "$NOTIFY_OUT"
@@ -73,7 +78,6 @@ jobs:
             echo "[DBG] no interrupt, skip notify"
           fi
 
-          # archive inbox after processing to avoid repeating the same latest item forever
           TS="$(date -u +%Y%m%dT%H%M%SZ)"
           mkdir -p "./data/state/ci_archived_inbox/$TS"
           shopt -s nullglob
