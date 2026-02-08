@@ -33,22 +33,47 @@ jobs:
         run: |
           python -m signalgate --root . ingest --input ./data/inbox
 
-      - name: Run latest inbox event (interrupt-only) + archive inbox
+      - name: Run latest inbox event (interrupt-only) + notify(debug) + archive inbox
+        shell: bash
         run: |
           set -euo pipefail
 
           LATEST="$(ls -1t ./data/inbox/*.json 2>/dev/null | head -n 1 || true)"
+          echo "[DBG] latest=$LATEST"
           if [ -z "$LATEST" ]; then
+            echo "[DBG] no inbox json, exit"
             exit 0
           fi
 
           OUT="$(python -m signalgate --root . run --input "$LATEST" || true)"
+          echo "[DBG] run_out_len=${#OUT}"
+
           if [ -n "$OUT" ]; then
+            echo "[DBG] OUT(begin)"
             echo "$OUT"
-            python -m signalgate notify --text "SignalGate INTERRUPT" --desp "$OUT"
+            echo "[DBG] OUT(end)"
+
+            # 关键：打印 notify 返回值；并且不 ok 就 fail（避免你以为“发了”其实没发）
+            NOTIFY_OUT="$(python -m signalgate notify --text "SignalGate INTERRUPT" --desp "$OUT")"
+            echo "[DBG] notify_resp(begin)"
+            echo "$NOTIFY_OUT"
+            echo "[DBG] notify_resp(end)"
+
+            if [ -z "$NOTIFY_OUT" ]; then
+              echo "::error::notify returned empty response"
+              exit 1
+            fi
+            if echo "$NOTIFY_OUT" | grep -qi '"success":"ok"\|"success": "ok"\|success.*ok'; then
+              echo "[DBG] notify ok"
+            else
+              echo "::error::notify response not ok: $NOTIFY_OUT"
+              exit 1
+            fi
+          else
+            echo "[DBG] no interrupt, skip notify"
           fi
 
-          # CI v0.2: archive inbox after processing to avoid repeating the same latest item forever
+          # archive inbox after processing to avoid repeating the same latest item forever
           TS="$(date -u +%Y%m%dT%H%M%SZ)"
           mkdir -p "./data/state/ci_archived_inbox/$TS"
           shopt -s nullglob
