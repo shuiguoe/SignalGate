@@ -3,6 +3,7 @@ name: SignalGate DryRun
 on:
   workflow_dispatch:
   schedule:
+    # Daily at 01:15 UTC
     - cron: "15 1 * * *"
 
 jobs:
@@ -35,14 +36,13 @@ jobs:
         run: |
           python -m signalgate --root . fetch --url "https://www.sec.gov/news/pressreleases.rss" --limit 10
 
-
-
-
       - name: Ingest inbox to cold
         run: |
           python -m signalgate --root . ingest --input ./data/inbox
 
-      - name: CI self-test (fixture should interrupt + notify)
+      # 只在手动触发时跑 fixture 自检；避免每天定时都推 SELFTEST
+      - name: CI self-test (fixture should interrupt + notify) [dispatch only]
+        if: github.event_name == 'workflow_dispatch'
         run: |
           OUT="$(python -m signalgate --root . run --input ./fixtures/event_sell.json || true)"
           echo "[DBG] fixture_out_len=${#OUT}"
@@ -52,7 +52,6 @@ jobs:
             echo "::error::fixture produced empty OUT; self-test failed"
             exit 1
           fi
-
 
       - name: Run latest inbox event (dryrun debug + interrupt-only) + archive inbox
         shell: bash
@@ -69,6 +68,7 @@ jobs:
           echo "[DBG] --- dry-run decision ---"
           DRY="$(python -m signalgate --root . run --input "$LATEST" --dry-run || true)"
           echo "$DRY"
+
           echo "[DBG] --- gate state ---"
           python -c "from signalgate.paths import get_paths; from signalgate.gate import can_interrupt,on_interrupt; p=get_paths('.'); print('can_interrupt=',can_interrupt(p.config_dir,p.state_dir)); print('gate_state=',on_interrupt(p.config_dir,p.state_dir))"
 
